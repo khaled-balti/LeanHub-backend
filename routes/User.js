@@ -1,7 +1,11 @@
 const express = require('express')
-const {addUser, fetchUser} = require('../controllers/User')
+const {addUser, fetchUser,addCourseToCart , getCart, deleteCourseFromCart} = require('../controllers/User')
+const { auth } = require("../Middleware/Auth")
 const router = express.Router()
 
 router.post('/signup', addUser)
 router.post('/login', fetchUser)
+router.post('/cart/:id', auth , addCourseToCart)
+router.get('/cart/courses', auth, getCart)
+router.post('/cart/delete/:id', auth, deleteCourseFromCart)
 module.exports = router

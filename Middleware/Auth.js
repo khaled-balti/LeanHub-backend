@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken')
-exports.auth = (req, res, next) => {
+const User = require('../models/User')
+exports.auth = async(req, res, next) => {
     try {
         const token = req.headers.authorization.split(" ")[1]
         const isCustomAuth = token.length < 500
@@ -7,6 +8,8 @@ exports.auth = (req, res, next) => {
         if (token && isCustomAuth) {
             decodedData = jwt.verify(token, 'user')
             req.userId = decodedData?.id
+            const user = await User.findById(req.userId)
+            req.user = user
         }
         else {
             decodedData = jwt.decode(token)

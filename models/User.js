@@ -28,5 +28,16 @@ const UserSchema = mongoose.Schema({
         type: String,
         required: true
     },
+    cart: {
+        courseNumber: {
+            type: Number,
+            default: 0,
+        },
+        courses: {
+            type: [mongoose.Types.ObjectId],
+            ref: 'Course',
+            default: []
+        }
+    }
 })
 module.exports = mongoose.model('User', UserSchema)
