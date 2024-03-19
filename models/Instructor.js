@@ -59,5 +59,9 @@ const InscructorSchema = mongoose.Schema({
         type: String,
         default: "",
     },
+    role: {
+        type: String,
+        default: 'instructor'
+    }
 })
 module.exports = mongoose.model('Inscructor', InscructorSchema)

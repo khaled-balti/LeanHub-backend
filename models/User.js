@@ -18,15 +18,12 @@ const UserSchema = mongoose.Schema({
     },
     study: {
         type: String,
-        required: true
     },
     university: {
         type: String,
-        required: true
     },
     password: {
         type: String,
-        required: true
     },
     cart: {
         courseNumber: {
@@ -38,6 +35,10 @@ const UserSchema = mongoose.Schema({
             ref: 'Course',
             default: []
         }
+    },
+    role: {
+        type: String,
+        default: 'student'
     }
 })
 module.exports = mongoose.model('User', UserSchema)

@@ -7,13 +7,15 @@ exports.auth = async(req, res, next) => {
         let decodedData;
         if (token && isCustomAuth) {
             decodedData = jwt.verify(token, 'user')
-            req.userId = decodedData?.id
-            const user = await User.findById(req.userId)
+            const id = decodedData?.id
+            const user = await User.findById(id)
             req.user = user
         }
         else {
             decodedData = jwt.decode(token)
-            req.userId = decodedData?.sub
+            const email = decodedData?.email
+            const user = await User.findOne({ email: email})
+            req.user = user
         }
         next()
     } catch (error) {

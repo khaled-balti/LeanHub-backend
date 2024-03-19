@@ -5,19 +5,45 @@ const mongoose = require('mongoose')
 const Course = require('../models/Course')
 exports.addUser = async(req,res) => {
     const {firstName, lastName, email, study, university, password, confirmPassword} = req.body
-    const existingUser = await User.findOne({email})
-    if (existingUser) {
-        return res.status(404).json({message: "user already exists"})
-    }
+    console.log(firstName)
     if (password !== confirmPassword) {
         return res.status(404).json({message: "password doesn\'t match"})
     }
     const hashedPassword = await bcrypt.hash(password, 12)
-    const name = `${firstName} ${lastName}`
-    const result = await User.create({firstName, lastName, name,  email, study, university, password: hashedPassword})
-    const token = jwt.sign({email: result.email, id: result._id}, "user", {expiresIn: "2h"})
-    return res.status(200).json({result, token})
+    const existingUser = await User.findOne({email})
+    console.log(existingUser)
+    if (existingUser) {
+        if (existingUser.password === "") {
+            existingUser.password = hashedPassword
+            existingUser.study = study
+            existingUser.university = university
+            await existingUser.save()
+            const token = jwt.sign({email: existingUser.email, id: existingUser._id}, "user", {expiresIn: "2h"})
+            return res.status(200).json({result: existingUser, token})
+        }
+        else {
+            return res.status(404).json({message: "user already exists"})
+        }
+    }
+    else {
+        const name = `${firstName} ${lastName}`
+        const result = await User.create({firstName, lastName, name,  email, study, university, password: hashedPassword})
+        const token = jwt.sign({email: result.email, id: result._id}, "user", {expiresIn: "2h"})
+        return res.status(200).json({result, token})
+    }
 } 
+
+exports.addGoogleUser = async(req, res) => {
+    const result = req.body
+    const existingUser = await User.findOne({email: result.email})
+    if (existingUser) {
+        return res.json({message: 'User Already exists'})
+    }
+    else {
+        await User.create({firstName: result?.givenName, lastName: result?.familyName, name: result?.name, email: result?.email, password: "", study: "", university: ""})
+        return res.json({message: 'User Created successfully'})
+    }
+}
 
 exports.fetchUser = async(req, res) => {
     const {email, password} = req.body
@@ -38,9 +64,9 @@ exports.addCourseToCart = async(req, res) => {
     if (!mongoose.Types.ObjectId.isValid(id)) {
         return res.status(404).json({message: "Course identifier invalid"})
     }
-    const course = await req.user.cart.courses.find(course => course.id == id)
-    if (course) {
-        return res.json({message: "Course Already added"})
+    const courseExists = req.user.cart.courses.includes(id);
+    if (courseExists) {
+        return res.json({ message: "Course already added" });
     }
     req.user.cart.courses.push(id)
     req.user.cart.courseNumber += 1
