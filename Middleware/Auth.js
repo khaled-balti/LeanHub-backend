@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken')
 const User = require('../models/User')
+const Instructor = require('../models/Instructor')
 exports.auth = async(req, res, next) => {
     try {
         const token = req.headers.authorization.split(" ")[1]
@@ -8,7 +9,10 @@ exports.auth = async(req, res, next) => {
         if (token && isCustomAuth) {
             decodedData = jwt.verify(token, 'user')
             const id = decodedData?.id
-            const user = await User.findById(id)
+            let user = await User.findById(id)
+            if (!user) {
+                user = await Instructor.findById(id)
+            }
             req.user = user
         }
         else {

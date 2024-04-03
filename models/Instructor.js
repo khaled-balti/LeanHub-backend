@@ -20,6 +20,10 @@ const InscructorSchema = mongoose.Schema({
         type: String,
         required: true,
     },
+    name: {
+        type: String,
+        required: true,
+    },
     image: {
         type: String,
         required: true,
@@ -34,18 +38,21 @@ const InscructorSchema = mongoose.Schema({
     },
     email: {
         type: String,
-        default: "",
+        required: true,
+    },
+    password: {
+        type: String,
         required: true,
     },
     github: {
         type: String,
         default: "",
-        required: true,
+        // required: true,
     },
     linkedIn: {
         type: String,
         default: "",
-        required: true,
+        // required: true,
     },
     facebook: {
         type: String,
@@ -62,6 +69,28 @@ const InscructorSchema = mongoose.Schema({
     role: {
         type: String,
         default: 'instructor'
-    }
+    },
+    cart: {
+        courseNumber: {
+            type: Number,
+            default: 0,
+        },
+        courses: {
+            type: [mongoose.Types.ObjectId],
+            ref: 'Course',
+            default: []
+        }
+    },
+    classes: {
+        courseNumber: {
+            type: Number,
+            default: 0,
+        },
+        courses: {
+            type: [mongoose.Types.ObjectId],
+            ref: 'Course',
+            default: []
+        }
+    },
 })
 module.exports = mongoose.model('Inscructor', InscructorSchema)

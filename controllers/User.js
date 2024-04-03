@@ -3,8 +3,9 @@ const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const mongoose = require('mongoose')
 const Course = require('../models/Course')
+const Instructor = require('../models/Instructor')
 exports.addUser = async(req,res) => {
-    const {firstName, lastName, email, study, university, password, confirmPassword} = req.body
+    const {firstName, lastName, email, study, university, password, confirmPassword, image} = req.body
     console.log(firstName)
     if (password !== confirmPassword) {
         return res.status(404).json({message: "password doesn\'t match"})
@@ -27,7 +28,7 @@ exports.addUser = async(req,res) => {
     }
     else {
         const name = `${firstName} ${lastName}`
-        const result = await User.create({firstName, lastName, name,  email, study, university, password: hashedPassword})
+        const result = await User.create({firstName, lastName, name,  email, study, university, password: hashedPassword, image: image})
         const token = jwt.sign({email: result.email, id: result._id}, "user", {expiresIn: "2h"})
         return res.status(200).json({result, token})
     }
@@ -47,9 +48,12 @@ exports.addGoogleUser = async(req, res) => {
 
 exports.fetchUser = async(req, res) => {
     const {email, password} = req.body
-    const existingUser = await User.findOne({email})
+    let existingUser = await User.findOne({email})
     if (!existingUser) {
-        return res.status(404).json({message: "user doesn\'t exist"})
+        existingUser = await Instructor.findOne({email})
+        if (!existingUser) {
+            return res.status(404).json({message: "user doesn\'t exist"})
+        }
     }
     const passwordIsCorrect = await bcrypt.compare(password, existingUser.password)
     if (!passwordIsCorrect) {
@@ -75,12 +79,36 @@ exports.addCourseToCart = async(req, res) => {
     return res.status(200).json(addedCourse)
 }
 
+exports.addCourseToClasses = async(req, res) => {
+    const {id} = req.params
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(404).json({message: "Course identifier invalid"})
+    }
+    req.user.classes.courses.push(id)
+    req.user.classes.courseNumber += 1
+    await req.user.save()
+    const addedCourse = await Course.findById(id)
+    return res.status(200).json(addedCourse)
+}
+
 exports.getCart = async (req,res) => {
     try {
         const coursesObjects =  await req.user.populate("cart.courses")
         const courses = coursesObjects.cart.courses
         await Course.populate(courses, { path: 'creator', select: 'firstName' });
         const nombreCourses = coursesObjects.cart.courseNumber
+        res.status(200).json({courses, nombreCourses})
+    } catch (error) {
+        res.status(404).json({message: error.message})
+    }
+}
+
+exports.getClasses = async (req,res) => {
+    try {
+        const coursesObjects =  await req.user.populate("classes.courses")
+        const courses = coursesObjects.classes.courses
+        await Course.populate(courses, { path: 'creator', select: 'firstName' });
+        const nombreCourses = coursesObjects.classes.courseNumber
         res.status(200).json({courses, nombreCourses})
     } catch (error) {
         res.status(404).json({message: error.message})
@@ -99,3 +127,40 @@ exports.deleteCourseFromCart = async (req,res) => {
         res.status(404).json({message: error.message})
     }
 }
+
+exports.getRelatedCourses = async (req, res) => {
+    try {
+        const courses = await Course.find({creator: req.user._id})
+        res.status(200).json({courses})
+    } catch (error) {
+        res.status(404).json({message: error.message})
+    }
+}
+exports.addRelatedCourse = async (req, res) => {
+    const course = req.body
+    const newCourse = new Course({...course, creator: req.user._id, createdAt: new Date().toISOString()})
+    try {
+        await newCourse.save()
+        res.status(200).json(newCourse)
+    } catch (error) {
+        res.status(404).json({message: error.message})
+    }
+}
+
+exports.getStudents = async (req, res) => {
+    try {
+        const users = await User.find();
+        const populatedUsers = await Promise.all(users.map(async (user) => {
+            await user.populate("classes.courses")
+            return user;
+        }));
+        const students = populatedUsers.filter((user) => {
+            return user.classes.courses.some((course) => {
+                return course.creator.equals(req.user._id);
+            });
+        });
+        res.status(200).json(students);
+    } catch (error) {
+        res.status(404).json({ message: error.message });
+    }
+};

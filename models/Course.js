@@ -37,6 +37,38 @@ const courseSchema = mongoose.Schema({
     },
     discount: {
         type: Number,
+        default: 0,
+    },
+    duration: {
+        type: Number,
+        default: 0
+    },
+    description: {
+        type: String,
+        default: ''
+    },
+    videos: {
+        type: [
+            {
+                videoTitle: {
+                    type: String,
+                    required: true
+                },
+                duration: {
+                    type: Number,
+                    required: true
+                },
+                image: {
+                    type: String,
+                    required: true
+                },
+                file: {
+                    type: String,
+                    required: true
+                }
+            }
+        ],
+        default: []
     }
 })
 module.exports = mongoose.model('Course', courseSchema)

@@ -8,6 +8,10 @@ const UserSchema = mongoose.Schema({
         type: String,
         required: true
     },
+    image: {
+        type: String,
+        default: ''
+    },
     name: {
         type: String,
         required: true
@@ -26,6 +30,17 @@ const UserSchema = mongoose.Schema({
         type: String,
     },
     cart: {
+        courseNumber: {
+            type: Number,
+            default: 0,
+        },
+        courses: {
+            type: [mongoose.Types.ObjectId],
+            ref: 'Course',
+            default: []
+        }
+    },
+    classes: {
         courseNumber: {
             type: Number,
             default: 0,
